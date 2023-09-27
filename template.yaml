@@ -1,0 +1,170 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform:
+  - AWS::Serverless-2016-10-31
+Description: >-
+  service-tracker
+
+
+
+Globals:
+  Function:
+    Runtime: nodejs16.x
+    MemorySize: 128
+    Timeout: 30
+    Handler: app.lambdaHandler
+    Environment:
+      Variables:
+        DB_NAME: Demo
+        DB_USERNAME: root
+        DB_PASSWORD: 0FZWSK7C#9
+        DB_HOST: 65.1.205.67
+        DB_PORT: 3306
+    Layers: 
+      - !Ref MysqlLayer
+
+Resources:
+  MysqlLayer:
+    Type: "AWS::Serverless::LayerVersion"
+    Properties:
+      LayerName: mysql-layer
+      Description: My custom MySQL layer 
+      ContentUri: src/layers/mysql-layer
+      CompatibleRuntimes:
+        - nodejs16.x
+    Metadata:
+      BuildMethod: makefile
+
+  insertIntoDb:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-test-function
+      CodeUri: ./src/handlers/insertData
+      Handler: index.insertIntoDb
+      Events: 
+        Api:
+          Type: Api
+          Properties:
+            Path: /insertData
+            Method: POST
+
+  getAllData:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-test-function
+      CodeUri: ./src/handlers/getAllData
+      Handler: index.getAllData
+      Events: 
+        Api:
+          Type: Api
+          Properties:
+            Path: /getAllData
+            Method: GET
+
+
+  updateData:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-test-function
+      CodeUri: ./src/handlers/updateData
+      Handler: index.updateData
+      Events: 
+        Api:
+          Type: Api
+          Properties:
+            Auth:
+              Authorizer: NONE
+            Path: /updatedata/{id}
+            Method: PUT
+
+  destroyData:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-test-function
+      CodeUri: ./src/handlers/destroyData
+      Handler: index.destroyData
+      Events: 
+        Api:
+          Type: Api
+          Properties:
+            Auth:
+              Authorizer: NONE
+            Path: /destroyData/{id}
+            Method: DELETE
+
+  getData:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: my-test-function
+      CodeUri: ./src/handlers/getData
+      Handler: index.getData
+      Events: 
+        Api:
+          Type: Api
+          Properties:
+            Auth:
+              Authorizer: NONE
+            Path: /getData/{id}
+            Method: GET
+  # lambdaExecutionRole:
+  #   Type: AWS::IAM::Role
+  #   Properties:
+  #     ManagedPolicyArns:
+  #       - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+  #       - arn:aws:iam::aws:policy/service-role/AWSLambdaRole
+  #       - arn:aws:iam::aws:policy/AWSLambdaExecute
+  #       - arn:aws:iam::aws:policy/AmazonS3FullAccess
+  #       - arn:aws:iam::aws:policy/CloudWatchFullAccess
+  #       - arn:aws:iam::aws:policy/AmazonSESFullAccess
+  #     AssumeRolePolicyDocument:
+  #       Version: "2012-10-17"
+  #       Statement:
+  #         - Effect: Allow
+  #           Principal:
+  #             Service:
+  #               - lambda.amazonaws.com
+  #           Action:
+  #             - sts:AssumeRole
+
+  # Uncomment the below AuthFunction to enable authorizer
+  # AuthFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     Tracing: envTracingMode
+  #     CodeUri: src/handlers/Authorizer
+  #     Handler: Authorizer.handler
+  #     FunctionName: envStackname-AuthFunction
+  #     Role: !GetAtt lambdaExecutionRole.Arn  
+  #     Environment:
+  #       Variables:
+  #         COGNITO_CONFIG_KEY: !Ref COGNITOCONFIGKEY
+  #         JWT_PUB_KEY: !Ref JWTPUBKEY
+  #         COG_CONF: !Ref ENVCOGCONF
+
+  # MysqlLayer:
+  #   Type: AWS::Serverless::LayerVersion
+  #   Properties:
+  #     LayerName: envStackname-mysql-layer
+  #     Description: DB Code shared across all lambda functions
+  #     ContentUri: src/layers/mysql-layer
+  #     CompatibleRuntimes:
+  #       - nodejs16.x
+  #     RetentionPolicy: Delete
+  #   Metadata:
+  #     BuildMethod: makefile
+      
+  # TestFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: src/handlers/test
+  #     Handler: index.handler
+  #     Runtime: nodejs16.x
+  #     Architectures:
+  #     - x86_64
+  #     Events:
+  #       Test:
+  #         Type: Api 
+  #         Properties:
+  #           Path: /test
+  #           Method: post
+  #     Layers: 
+  #     - !Ref MysqlLayer
